@@ -1,7 +1,23 @@
 #include <cstdlib>
 #include "GLUtils.h"
 
+#ifdef __ANDROID__
 typedef AAsset esFile;
+#else
+#include <stdio.h>
+#include <ImageLoader.h>
+typedef FILE esFile;
+
+static std::string sAssetRoot = ".";
+
+void GLUtils::setAssetRoot(const char *path) {
+    sAssetRoot = path;
+}
+
+static FILE *openAsset(const char *path) {
+    return fopen((sAssetRoot + "/" + path).c_str(), "rb");
+}
+#endif
 
 // 注意点：保证内存是连续的，不然读取错误  使用  #pragma pack(1)  或者  __attribute__ ( ( packed ) ) 都可以
 // 【我的C语言学习进阶之旅】关于C/C++内存对齐读取文件产生的问题以及解决方法  https://blog.csdn.net/qq446282412/article/details/121539330
@@ -31,6 +47,7 @@ typedef struct
 //#pragma pack(pop,x1)
 
 
+#ifdef __ANDROID__
 static JNIEnv *sEnv = nullptr;
 static jobject sAssetManager = nullptr;
 
@@ -61,6 +78,11 @@ static esFile *esFileOpen(const char *fileName) {
     FUN_END_TIME("GLUtils::esFileOpen")
     return file;
 }
+#else
+static esFile *esFileOpen(const char *fileName) {
+    return openAsset(fileName);
+}
+#endif
 
 //
 // File close
@@ -68,7 +90,11 @@ static esFile *esFileOpen(const char *fileName) {
 static void esFileClose(esFile *pFile) {
     FUN_BEGIN_TIME("GLUtils::esFileClose")
         if (pFile != nullptr) {
+#ifdef __ANDROID__
             AAsset_close(pFile);
+#else
+            fclose(pFile);
+#endif
         }
     FUN_END_TIME("GLUtils::esFileClose")
 }
@@ -82,7 +108,11 @@ static int esFileRead(esFile *pFile, int bytesToRead, void *buffer) {
         if (pFile == nullptr) {
             return bytesRead;
         }
+#ifdef __ANDROID__
         bytesRead = AAsset_read(pFile, buffer, bytesToRead);
+#else
+        bytesRead = (int)fread(buffer, 1, (size_t)bytesToRead, pFile);
+#endif
     FUN_END_TIME("GLUtils::esFileRead")
     return bytesRead;
 }
@@ -286,6 +316,9 @@ GLuint GLUtils::loadTexture(const char *path) {
     GLuint textureId = 0;
     FUN_BEGIN_TIME("GLUtils::loadTexture")
         LOGI("GLUtils::loadTexture path [%s]" ,path)
+#ifndef __ANDROID__
+        textureId = ImageLoader::TextureFromFile(path, sAssetRoot.c_str());
+#else
         jclass utilsClass = sEnv->FindClass(
                 "com/oyp/openglesdemo/Utils");  //com.oyp.openglesdemo.Utils类
         if (utilsClass == nullptr) {
@@ -302,6 +335,7 @@ GLuint GLUtils::loadTexture(const char *path) {
         textureId = (GLuint) sEnv->CallStaticIntMethod(utilsClass, loadTexture, sAssetManager,
                                                        pathStr);
         sEnv->DeleteLocalRef(pathStr);
+#endif
     FUN_END_TIME("GLUtils::loadTexture")
     return textureId;
 }
@@ -310,6 +344,7 @@ char *GLUtils::openTextFile(const char *path) {
     char *buffer;
     FUN_BEGIN_TIME("GLUtils::openTextFile")
         LOGI("GLUtils::openTextFile path [%s]" ,path)
+#ifdef __ANDROID__
         AAsset *asset = loadAsset(path);
         if (asset == nullptr) {
             LOGE("Couldn't load %s", path)
@@ -319,6 +354,19 @@ char *GLUtils::openTextFile(const char *path) {
         buffer = new char[length + 1];
         int num = AAsset_read(asset, buffer, length);
         AAsset_close(asset);
+#else
+        FILE *asset = openAsset(path);
+        if (asset == nullptr) {
+            LOGE("Couldn't load %s", path)
+            return nullptr;
+        }
+        fseek(asset, 0, SEEK_END);
+        off_t length = ftell(asset);
+        fseek(asset, 0, SEEK_SET);
+        buffer = new char[length + 1];
+        int num = (int)fread(buffer, 1, (size_t)length, asset);
+        fclose(asset);
+#endif
         if (num != length) {
             LOGE("Couldn't read %s", path)
             delete[] buffer;

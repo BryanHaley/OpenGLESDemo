@@ -1,12 +1,17 @@
 #ifndef OPEN_GL_LESSON_NATIVE_GL_UTILS_H_
 #define OPEN_GL_LESSON_NATIVE_GL_UTILS_H_
 
+#ifdef __ANDROID__
 #include <jni.h>
 #include <GLES3/gl3.h>
 #include <GLES3/gl3ext.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <android/asset_manager_jni.h>
+#else
+#include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
+#endif
 #include <string>
 
 #include <Matrix.h>
@@ -26,7 +31,12 @@ public:
 	/**
 	 * Set Environment parameter
 	 */
+#ifdef __ANDROID__
 	static void setEnvAndAssetManager(JNIEnv* env, jobject assetManager);
+#else
+	// the folder the app's assets are read from
+	static void setAssetRoot(const char* path);
+#endif
 
 	/**
 	 *  Loads a file from assets/path into a char array.

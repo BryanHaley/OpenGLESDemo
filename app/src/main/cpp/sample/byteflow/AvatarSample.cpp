@@ -201,7 +201,7 @@ void AvatarSample::Draw() {
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_TextureIds[2]);
-    GLUtils::setFloat(m_BlurProgramObj, "s_TextureMap", 0);
+    GLUtils::setInt(m_BlurProgramObj, "s_TextureMap", 0);
 
     // 缩放控制
     scaleLevel = static_cast<float>(1.0f + dScaleLevel * pow(-1, m_FrameIndex / 200));

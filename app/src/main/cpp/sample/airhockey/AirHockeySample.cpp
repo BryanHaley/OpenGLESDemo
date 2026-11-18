@@ -53,6 +53,7 @@ void AirHockeySample::Create() {
         return;
     }
     m_TableMVPMatLoc = glGetUniformLocation(m_ProgramObj, "u_MVPMatrix");
+    m_SamplerLoc = glGetUniformLocation(m_ProgramObj, "u_TextureUnit");
 
     GLint vtxStride = sizeof(GLfloat) *
                       (TABLE_POSITION_COMPONENT_COUNT + TABLE_TEXTURE_COORDINATES_COMPONENT_COUNT);

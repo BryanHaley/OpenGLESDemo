@@ -129,7 +129,7 @@ void ShockWaveSample::Draw() {
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_TextureId);
-    GLUtils::setFloat(m_ProgramObj, "s_TextureMap", 0);
+    GLUtils::setInt(m_ProgramObj, "s_TextureMap", 0);
 
     //float time = static_cast<float>(fmod(GetSysCurrentTime(), 2000) / 2000);
     auto time = static_cast<float>(fmod(m_FrameIndex, 150) / 120);

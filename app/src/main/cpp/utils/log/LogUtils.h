@@ -5,7 +5,11 @@
 
 // 实现 C语言中打印log到android控制台
 // 导入 头文件 android/log.h
+#ifdef __ANDROID__
 #include <android/log.h>
+#else
+#include <stdio.h>
+#endif
 #include <string.h>
 #include <sys/time.h>
 
@@ -14,7 +18,16 @@
 
 #define LOG_SWITCH_STATUS_ON
 
-#ifdef LOG_SWITCH_STATUS_ON
+#ifndef __ANDROID__
+// macOS: warnings and errors to stderr, the rest quiet; the arguments still
+// run, since some samples do their work inside them
+static inline void LogQuietly(const char *, ...) {}
+#define LOGV(format, ...) LogQuietly(format, ##__VA_ARGS__);
+#define LOGD(format, ...) LogQuietly(format, ##__VA_ARGS__);
+#define LOGI(format, ...) LogQuietly(format, ##__VA_ARGS__);
+#define LOGW(format, ...) fprintf(stderr, "[%s][%s][%d]: " format "\n", __FILENAME__, __FUNCTION__, __LINE__, ##__VA_ARGS__);
+#define LOGE(format, ...) fprintf(stderr, "[%s][%s][%d]: " format "\n", __FILENAME__, __FUNCTION__, __LINE__, ##__VA_ARGS__);
+#elif defined(LOG_SWITCH_STATUS_ON)
 // 定义LOG 标签
 #define TAG "NDK_JNI_LOG_TAG"
 // 定义几个打印日志的方法

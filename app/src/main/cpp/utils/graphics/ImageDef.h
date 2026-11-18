@@ -9,7 +9,11 @@
 #ifndef NDK_OPENGLES_3_0_IMAGEDEF_H
 #define NDK_OPENGLES_3_0_IMAGEDEF_H
 
+#ifdef __APPLE__
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 #include <string.h>
 #include <unistd.h>
 #include "stdio.h"
